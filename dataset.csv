@@ -1,0 +1,6 @@
+Name,Age,Salary,Gender,Department
+John,28,50000,Male,Sales
+Anna,25,,Female,HR
+Mike,,60000,Male,IT
+Sara,22,45000,Female,Marketing
+Tom,35,70000,Male,Sales
