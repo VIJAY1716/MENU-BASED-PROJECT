@@ -1,0 +1,404 @@
+#TASK-1
+
+import pandas as pd
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+import os
+
+def process_data(file_path, save_path=None):
+    try:
+        # Load dataset
+        df = pd.read_csv(file_path)
+        print(f"Dataset loaded successfully. Shape: {df.shape}")
+        
+        # Handle missing values
+        df.fillna(df.mean(numeric_only=True), inplace=True)  # Fill numerical NaNs with mean
+        df.fillna(df.mode().iloc[0], inplace=True)  # Fill categorical NaNs with mode
+        print("Missing values handled.")
+
+        # Encode categorical features
+        for column in df.select_dtypes(include=['object']).columns:
+            df[column] = LabelEncoder().fit_transform(df[column])
+        print("Categorical features encoded.")
+        
+        # Standardize numerical features
+        numerical_cols = df.select_dtypes(include=['float64', 'int64']).columns
+        scaler = StandardScaler()
+        df[numerical_cols] = scaler.fit_transform(df[numerical_cols])
+        print("Numerical features standardized.")
+        
+        # Save the processed dataset if a save path is provided
+        if save_path:
+            df.to_csv(save_path, index=False)
+            print(f"Processed dataset saved to: {save_path}")
+        
+        return df
+
+    except FileNotFoundError:
+        print(f"Error: The file {file_path} was not found.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+# Example usage
+file_path = 'V:/OneDrive/Desktop/menu_based_project/ml/dataset.csv'
+save_path = 'V:/OneDrive/Desktop/menu_based_project/ml/processed_dataset.csv'
+processed_data = process_data(file_path, save_path)
+if processed_data is not None:
+    print(processed_data.head())
+
+#TASK-2
+
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import LabelEncoder
+import joblib
+
+# Load dataset
+df = pd.read_csv('dataset.csv')
+
+# Handle missing values
+df.fillna(df.mean(numeric_only=True), inplace=True)
+df.fillna(df.mode().iloc[0], inplace=True)
+
+# Encode categorical features
+label_encoders = {}
+for column in df.select_dtypes(include=['object']).columns:
+    le = LabelEncoder()
+    df[column] = le.fit_transform(df[column])
+    label_encoders[column] = le
+
+# Features and target
+X = df[['Age', 'Department']]
+y = df['Salary']
+
+# Train the model
+model = LinearRegression()
+model.fit(X, y)
+
+# Save the model and label encoders
+joblib.dump(model, 'model.pkl')
+joblib.dump(label_encoders, 'label_encoders.pkl')
+
+#TASK-3
+
+import cv2
+
+def capture_image():
+    cap = cv2.VideoCapture(0)
+
+    if not cap.isOpened():
+        print("Cannot open camera")
+        return None
+
+    ret, frame = cap.read()
+
+    if ret:
+        cv2.imwrite('abc.jpg', frame)
+        print("Image saved as abc.jpg")
+    else:
+        print("Failed to capture image")
+        frame = None
+
+    cap.release()
+    cv2.destroyAllWindows()
+    
+    return frame
+
+def detect_and_crop_face(image):
+    # Load the pre-trained face detector
+    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+
+    if len(faces) == 0:
+        print("No faces detected.")
+        return None, None
+
+    # Assuming the first detected face is the target
+    (x, y, w, h) = faces[0]
+    face = image[y:y+h, x:x+w]
+    
+    return face, (x, y, w, h)
+
+def overlay_face_on_image(original_image, face, face_position):
+    x, y, w, h = face_position
+    # Resize face to fit within the original image
+    face = cv2.resize(face, (w, h), interpolation=cv2.INTER_AREA)
+
+    # Place the face back onto the original image
+    original_image[y:y+h, x:x+w] = face
+
+    return original_image
+
+def main():
+    # Capture and save the image
+    image = capture_image()
+    if image is None:
+        return
+
+    # Detect and crop the face
+    face, face_position = detect_and_crop_face(image)
+    if face is None:
+        print("No face detected, skipping overlay.")
+        return
+
+    # Save the cropped face separately
+    cv2.imwrite('def.jpg', face)
+    print("Cropped face saved as def.jpg")
+
+    # Overlay the cropped face back onto the original image
+    result_image = overlay_face_on_image(image, face, face_position)
+
+    # Save and display the result
+    cv2.imwrite('abc_with_cropped_face.jpg', result_image)
+    cv2.imshow('Image with Cropped Face', result_image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+if __name__ == "__main__":
+    main()
+
+#TASK-4
+
+import cv2
+
+# Step 1: Capture an Image from the Webcam
+def capture_image():
+    cap = cv2.VideoCapture(0)
+
+    if not cap.isOpened():
+        print("Cannot open camera")
+        return None
+
+    ret, frame = cap.read()
+
+    if ret:
+        # Save the captured frame as 'abc.jpg'
+        cv2.imwrite('abc.jpg', frame)
+        print("Image saved as abc.jpg")
+    else:
+        print("Failed to capture image")
+        frame = None
+
+    cap.release()
+    cv2.destroyAllWindows()
+    
+    return frame
+
+# Step 2: Apply Filters to the Saved Image
+def apply_filters(image_path):
+    # Load the saved image
+    image = cv2.imread(image_path)
+
+    if image is None:
+        print(f"Failed to load image from {image_path}")
+        return
+
+    # Convert the image to grayscale
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    cv2.imwrite('gray_abc.jpg', gray)
+
+    # Apply Gaussian Blur
+    gaussian_blur = cv2.GaussianBlur(image, (15, 15), 0)
+    cv2.imwrite('gaussian_blur_abc.jpg', gaussian_blur)
+
+    # Apply Median Blur
+    median_blur = cv2.medianBlur(image, 15)
+    cv2.imwrite('median_blur_abc.jpg', median_blur)
+
+    # Apply Bilateral Filter
+    bilateral_filter = cv2.bilateralFilter(image, 15, 75, 75)
+    cv2.imwrite('bilateral_filter_abc.jpg', bilateral_filter)
+
+    # Apply Edge Detection (Canny)
+    edges = cv2.Canny(image, 100, 200)
+    cv2.imwrite('edges_abc.jpg', edges)
+
+    # Display the original and filtered images
+    cv2.imshow('Original Image', image)
+    cv2.imshow('Grayscale', gray)
+    cv2.imshow('Gaussian Blur', gaussian_blur)
+    cv2.imshow('Median Blur', median_blur)
+    cv2.imshow('Bilateral Filter', bilateral_filter)
+    cv2.imshow('Edge Detection', edges)
+
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+# Main Function
+def main():
+    # Capture and save the image
+    capture_image()
+
+    # Apply filters to the saved image
+    apply_filters('abc.jpg')
+
+if __name__ == "__main__":
+    main()
+
+#TASK-5
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Dimensions of the image
+width = 400
+height = 300
+
+# Create a NumPy array for the image with RGB channels
+image = np.zeros((height, width, 3), dtype=np.uint8)
+
+# Set the color (RGB values)
+color = (255, 0, 0)  # Red color
+
+# Fill the image with the specified color
+image[:, :] = color
+
+# Display the image using matplotlib
+plt.imshow(image)
+plt.axis('off')  # Hide axis ticks and labels
+plt.show()
+
+#TASK-6
+
+import cv2
+import numpy as np
+
+def capture_image():
+    cap = cv2.VideoCapture(0)
+
+    if not cap.isOpened():
+        print("Cannot open camera")
+        return None
+
+    ret, frame = cap.read()
+
+    if ret:
+        cv2.imwrite('abc.jpg', frame)
+        print("Image saved as abc.jpg")
+    else:
+        print("Failed to capture image")
+        frame = None
+
+    cap.release()
+    cv2.destroyAllWindows()
+    
+    return frame
+
+def overlay_image_alpha(img, img_overlay, pos, alpha_mask):
+    x, y = pos
+
+    # Image ranges
+    y1, y2 = max(0, y), min(img.shape[0], y + img_overlay.shape[0])
+    x1, x2 = max(0, x), min(img.shape[1], x + img_overlay.shape[1])
+
+    # Overlay ranges
+    y1o, y2o = max(0, -y), min(img_overlay.shape[0], img.shape[0] - y)
+    x1o, x2o = max(0, -x), min(img_overlay.shape[1], img.shape[1] - x)
+
+    # Exit if nothing to overlay
+    if y1 >= y2 or x1 >= x2 or y1o >= y2o or x1o >= x2o:
+        return img
+
+    # Blend overlay within the determined ranges
+    img_crop = img[y1:y2, x1:x2]
+    img_overlay_crop = img_overlay[y1o:y2o, x1o:x2o]
+    alpha = alpha_mask[y1o:y2o, x1o:x2o, np.newaxis]
+
+    img_crop[:] = alpha * img_overlay_crop + (1 - alpha) * img_crop
+    return img
+
+def apply_sunglasses_filter(image_path):
+    # Load the image
+    image = cv2.imread(image_path)
+    if image is None:
+        print("Failed to load the image.")
+        return
+
+    # Load the sunglasses image with transparency (alpha channel)
+    sunglasses = cv2.imread(r'V:\OneDrive\Desktop\menu_based_project\ml\Sunglasses-PNG-File.png', cv2.IMREAD_UNCHANGED)
+    if sunglasses is None:
+        print("Failed to load the sunglasses image.")
+        return
+
+    # Check if the sunglasses image has an alpha channel
+    if sunglasses.shape[2] != 4:
+        print("Sunglasses image does not have an alpha channel.")
+        return
+
+    sunglasses_alpha = sunglasses[:, :, 3] / 255.0
+    sunglasses_rgb = sunglasses[:, :, :3]
+
+    # Resize sunglasses if larger than the image
+    if sunglasses.shape[0] > image.shape[0] or sunglasses.shape[1] > image.shape[1]:
+        scale = min(image.shape[0] / sunglasses.shape[0], image.shape[1] / sunglasses.shape[1]) * 0.5
+        sunglasses = cv2.resize(sunglasses, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
+        sunglasses_alpha = sunglasses[:, :, 3] / 255.0
+        sunglasses_rgb = sunglasses[:, :, :3]
+
+    # Place the sunglasses roughly over the center
+    center_x, center_y = image.shape[1] // 2, image.shape[0] // 2
+    image_with_sunglasses = overlay_image_alpha(image, sunglasses_rgb, (center_x - sunglasses.shape[1] // 2, center_y - sunglasses.shape[0] // 2), sunglasses_alpha)
+
+    # Save and display the image with sunglasses
+    cv2.imwrite('abc_with_sunglasses.jpg', image_with_sunglasses)
+    cv2.imshow('Image with Sunglasses', image_with_sunglasses)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+def apply_star_filter(image_path):
+    # Load the image
+    image = cv2.imread(image_path)
+    if image is None:
+        print("Failed to load the image.")
+        return
+
+    # Load the star image with transparency (alpha channel)
+    star = cv2.imread(r'V:\OneDrive\Desktop\menu_based_project\ml\R.png', cv2.IMREAD_UNCHANGED)
+    if star is None:
+        print("Failed to load the star image.")
+        return
+
+    # Check if the star image has an alpha channel
+    if star.shape[2] != 4:
+        print("Star image does not have an alpha channel.")
+        return
+
+    star_alpha = star[:, :, 3] / 255.0
+    star_rgb = star[:, :, :3]
+
+    # Resize star if larger than the image
+    if star.shape[0] > image.shape[0] or star.shape[1] > image.shape[1]:
+        scale = min(image.shape[0] / star.shape[0], image.shape[1] / star.shape[1]) * 0.5
+        star = cv2.resize(star, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
+        star_alpha = star[:, :, 3] / 255.0
+        star_rgb = star[:, :, :3]
+
+    # Place multiple stars in random locations
+    np.random.seed(0)  # For reproducibility
+    for _ in range(5):
+        rand_x = np.random.randint(0, image.shape[1] - star.shape[1])
+        rand_y = np.random.randint(0, image.shape[0] - star.shape[0])
+        image = overlay_image_alpha(image, star_rgb, (rand_x, rand_y), star_alpha)
+
+    # Save and display the image with stars
+    cv2.imwrite('abc_with_stars.jpg', image)
+    cv2.imshow('Image with Stars', image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+# Main function to run the entire process
+def main():
+    # Capture and save the image
+    capture_image()
+
+    # Apply sunglasses filter and save result
+    apply_sunglasses_filter('abc.jpg')
+
+    # Apply star filter and save result
+    apply_star_filter('abc.jpg')
+
+if __name__ == "__main__":
+    main()
+
