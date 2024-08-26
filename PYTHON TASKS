@@ -1,0 +1,273 @@
+#TASK-1
+
+import smtplib
+
+# Your email credentials
+email = "vijayaganesh1617@gmail.com"
+app_password = "dmvz ddff dkyx jedp"  # Use the application-specific password
+
+# Input from user
+receiver_email = input("Enter receiver's email: ")
+subject = input("Subject: ")
+message = input("Message: ")
+
+try:
+    # Establish a secure session with Gmail's outgoing SMTP server using your gmail account
+    server = smtplib.SMTP("smtp.gmail.com", 587)
+    server.starttls()  # Enable TLS encryption
+
+    # Log in to your Gmail account with the application-specific password
+    server.login(email, app_password)
+
+    # Compose email
+    email_message = f"Subject: {subject}\n\n{message}"
+
+    # Send email
+    server.sendmail(email, receiver_email, email_message)
+
+    print(f"Email has been sent successfully to {receiver_email}")
+
+except Exception as e:
+    print(f"Error occurred: {str(e)}")
+
+finally:
+    # Quit the server
+    server.quit()
+
+#TASK-2
+
+from twilio.rest import Client
+
+# Your Account SID and Auth Token from twilio.com/console
+account_sid = 'AC8bfbe301e6030bce0956626bd854c4ec'
+auth_token = '28f003329af144ba5728c12cabe7382c'
+client = Client(account_sid, auth_token)
+
+# Message details
+from_phone = '+17079435649'
+to_phone = '+918608830341'
+message_body = 'Hello from Python!'
+
+# Send message
+message = client.messages.create(
+    body=message_body,
+    from_=from_phone,
+    to=to_phone
+)
+
+print(f'Message sent: {message.sid}')
+
+#TASK-3
+
+from googlesearch import search
+
+# Define the search query
+query = "Python programming"
+
+# Perform the search and get the top 5 results
+search_results = search(query, num_results=5)
+
+# Print the results
+for idx, result in enumerate(search_results, start=1):
+    print(f"Result {idx}: {result}")
+
+#TASK-4
+
+import requests
+import gps
+
+def get_location_by_ip():
+    try:
+        response = requests.get('https://ipinfo.io/json')
+        data = response.json()
+        location = {
+            'ip': data.get('ip'),
+            'city': data.get('city'),
+            'region': data.get('region'),
+            'country': data.get('country'),
+            'loc': data.get('loc')  # Latitude and Longitude
+        }
+        return location
+    except requests.RequestException as e:
+        print(f"Error fetching location data: {e}")
+        return None
+
+def get_gps_coordinates():
+    try:
+        session = gps.gps("localhost", "2947")
+        session.stream(gps.WATCH_ENABLE | gps.WATCH_NEWSTYLE)
+        report = session.next()
+        if report['class'] == 'TPV':
+            latitude = getattr(report, 'lat', 'Unavailable')
+            longitude = getattr(report, 'lon', 'Unavailable')
+            return latitude, longitude
+    except Exception as e:
+        print(f"Error fetching GPS data: {e}")
+        return None
+
+def main():
+    # Choose method:
+    # Uncomment the desired method to use
+    
+    # IP Geolocation
+    print("Fetching location using IP geolocation...")
+    location = get_location_by_ip()
+    if location:
+        print(f"IP Address: {location['ip']}")
+        print(f"City: {location['city']}")
+        print(f"Region: {location['region']}")
+        print(f"Country: {location['country']}")
+        print(f"Coordinates: {location['loc']}")
+
+    # GPS Module
+    # Uncomment the following section if using GPS hardware
+    """
+    print("Fetching GPS coordinates...")
+    coordinates = get_gps_coordinates()
+    if coordinates:
+        print(f"Latitude: {coordinates[0]}")
+        print(f"Longitude: {coordinates[1]}")
+    """
+
+if __name__ == "__main__":
+    main()
+
+#TASK-5
+
+import pyttsx3
+
+# Initialize the text-to-speech engine
+engine = pyttsx3.init()
+
+# Get available voices
+voices = engine.getProperty('voices')
+
+# Set voice (0 for male, 1 for female)
+engine.setProperty('voice', voices[1].id)
+
+# Set speech rate
+engine.setProperty('rate', 150)
+
+# Text to be spoken
+text = "Hello, this is a text-to-speech conversion using Python."
+
+# Print the text
+print(text)
+
+# Use the TTS engine to speak the text
+engine.say(text)
+
+# Wait for the speech to finish
+engine.runAndWait()
+
+#TASK-6
+
+from ctypes import cast, POINTER
+from comtypes import CLSCTX_ALL
+from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
+
+def get_volume():
+    try:
+        devices = AudioUtilities.GetSpeakers()
+        interface = devices.Activate(
+            IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
+        volume = cast(interface, POINTER(IAudioEndpointVolume))
+        current_volume = volume.GetMasterVolumeLevelScalar()
+        return current_volume
+    except Exception as e:
+        print(f"An error occurred while getting volume: {e}")
+        return None
+
+def set_volume(value):
+    try:
+        value = max(0.0, min(value, 1.0))
+        devices = AudioUtilities.GetSpeakers()
+        interface = devices.Activate(
+            IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
+        volume = cast(interface, POINTER(IAudioEndpointVolume))
+        volume.SetMasterVolumeLevelScalar(value, None)
+        print(f"Volume set to {value * 100:.0f}%")
+    except Exception as e:
+        print(f"An error occurred while setting volume: {e}")
+
+if __name__ == "__main__":
+    try:
+        current_volume = get_volume()
+        if current_volume is not None:
+            print(f"Current Volume: {current_volume * 100:.0f}%")
+        set_volume(0.5)  # Set volume to 50%
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+#TASK-7
+
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
+
+def send_bulk_emails(subject, body, to_addresses, smtp_server, smtp_port, smtp_user, smtp_password, attachment_path=None):
+    """
+    Send bulk emails with optional attachments.
+
+    Parameters:
+    - subject: Email subject
+    - body: Email body content
+    - to_addresses: List of recipient email addresses
+    - smtp_server: SMTP server address
+    - smtp_port: SMTP server port
+    - smtp_user: SMTP username (email address)
+    - smtp_password: SMTP password
+    - attachment_path: Path to attachment file (optional)
+    """
+    try:
+        # Set up the SMTP server
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        server.starttls()
+        server.login(smtp_user, smtp_password)
+
+        for to_address in to_addresses:
+            # Create a MIMEMultipart object
+            msg = MIMEMultipart()
+            msg['From'] = smtp_user
+            msg['To'] = to_address
+            msg['Subject'] = subject
+
+            # Attach the body
+            msg.attach(MIMEText(body, 'plain'))
+
+            # Attach a file if specified
+            if attachment_path:
+                with open(attachment_path, 'rb') as attachment:
+                    part = MIMEBase('application', 'octet-stream')
+                    part.set_payload(attachment.read())
+                    encoders.encode_base64(part)
+                    part.add_header(
+                        'Content-Disposition',
+                        f'attachment; filename={attachment_path.split("/")[-1]}',
+                    )
+                    msg.attach(part)
+
+            # Send the email
+            server.send_message(msg)
+            print(f"Email sent to {to_address}")
+
+        # Quit the server
+        server.quit()
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+# Example usage
+if __name__ == "__main__":
+    subject = "Bulk Email Test"
+    body = "This is a test email sent in bulk using Python."
+    to_addresses = ['2022bcaaidsvijay11316@poornima.edu.in', 'coolvijay3716@gmail.com']
+    smtp_server = 'smtp.gmail.com'
+    smtp_port = 587
+    smtp_user = 'vijayaganesh1617@gmail.com'
+    smtp_password = 'dmvz ddff dkyx jedp'
+    
+
+    send_bulk_emails(subject, body, to_addresses, smtp_server, smtp_port, smtp_user, smtp_password)
