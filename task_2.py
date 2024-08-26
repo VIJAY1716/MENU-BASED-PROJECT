@@ -1,31 +1,20 @@
-import pandas as pd
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
-from sklearn.preprocessing import LabelEncoder
-import joblib
+from twilio.rest import Client
 
-# Load dataset
-df = pd.read_csv('dataset.csv')
+# Your Account SID and Auth Token from twilio.com/console
+account_sid = 'AC8bfbe301e6030bce0956626bd854c4ec'
+auth_token = '28f003329af144ba5728c12cabe7382c'
+client = Client(account_sid, auth_token)
 
-# Handle missing values
-df.fillna(df.mean(numeric_only=True), inplace=True)
-df.fillna(df.mode().iloc[0], inplace=True)
+# Message details
+from_phone = '+17079435649'
+to_phone = '+918608830341'
+message_body = 'Hello from Python!'
 
-# Encode categorical features
-label_encoders = {}
-for column in df.select_dtypes(include=['object']).columns:
-    le = LabelEncoder()
-    df[column] = le.fit_transform(df[column])
-    label_encoders[column] = le
+# Send message
+message = client.messages.create(
+    body=message_body,
+    from_=from_phone,
+    to=to_phone
+)
 
-# Features and target
-X = df[['Age', 'Department']]
-y = df['Salary']
-
-# Train the model
-model = LinearRegression()
-model.fit(X, y)
-
-# Save the model and label encoders
-joblib.dump(model, 'model.pkl')
-joblib.dump(label_encoders, 'label_encoders.pkl')
+print(f'Message sent: {message.sid}')

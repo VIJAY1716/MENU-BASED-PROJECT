@@ -1,75 +1,58 @@
-import cv2
+import requests
+import gps
 
-# Step 1: Capture an Image from the Webcam
-def capture_image():
-    cap = cv2.VideoCapture(0)
-
-    if not cap.isOpened():
-        print("Cannot open camera")
+def get_location_by_ip():
+    try:
+        response = requests.get('https://ipinfo.io/json')
+        data = response.json()
+        location = {
+            'ip': data.get('ip'),
+            'city': data.get('city'),
+            'region': data.get('region'),
+            'country': data.get('country'),
+            'loc': data.get('loc')  # Latitude and Longitude
+        }
+        return location
+    except requests.RequestException as e:
+        print(f"Error fetching location data: {e}")
         return None
 
-    ret, frame = cap.read()
+def get_gps_coordinates():
+    try:
+        session = gps.gps("localhost", "2947")
+        session.stream(gps.WATCH_ENABLE | gps.WATCH_NEWSTYLE)
+        report = session.next()
+        if report['class'] == 'TPV':
+            latitude = getattr(report, 'lat', 'Unavailable')
+            longitude = getattr(report, 'lon', 'Unavailable')
+            return latitude, longitude
+    except Exception as e:
+        print(f"Error fetching GPS data: {e}")
+        return None
 
-    if ret:
-        # Save the captured frame as 'abc.jpg'
-        cv2.imwrite('abc.jpg', frame)
-        print("Image saved as abc.jpg")
-    else:
-        print("Failed to capture image")
-        frame = None
-
-    cap.release()
-    cv2.destroyAllWindows()
-    
-    return frame
-
-# Step 2: Apply Filters to the Saved Image
-def apply_filters(image_path):
-    # Load the saved image
-    image = cv2.imread(image_path)
-
-    if image is None:
-        print(f"Failed to load image from {image_path}")
-        return
-
-    # Convert the image to grayscale
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    cv2.imwrite('gray_abc.jpg', gray)
-
-    # Apply Gaussian Blur
-    gaussian_blur = cv2.GaussianBlur(image, (15, 15), 0)
-    cv2.imwrite('gaussian_blur_abc.jpg', gaussian_blur)
-
-    # Apply Median Blur
-    median_blur = cv2.medianBlur(image, 15)
-    cv2.imwrite('median_blur_abc.jpg', median_blur)
-
-    # Apply Bilateral Filter
-    bilateral_filter = cv2.bilateralFilter(image, 15, 75, 75)
-    cv2.imwrite('bilateral_filter_abc.jpg', bilateral_filter)
-
-    # Apply Edge Detection (Canny)
-    edges = cv2.Canny(image, 100, 200)
-    cv2.imwrite('edges_abc.jpg', edges)
-
-    # Display the original and filtered images
-    cv2.imshow('Original Image', image)
-    cv2.imshow('Grayscale', gray)
-    cv2.imshow('Gaussian Blur', gaussian_blur)
-    cv2.imshow('Median Blur', median_blur)
-    cv2.imshow('Bilateral Filter', bilateral_filter)
-    cv2.imshow('Edge Detection', edges)
-
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-
-# Main Function
 def main():
-    # Capture and save the image
-    capture_image()
+    # Choose method:
+    # Uncomment the desired method to use
+    
+    # IP Geolocation
+    print("Fetching location using IP geolocation...")
+    location = get_location_by_ip()
+    if location:
+        print(f"IP Address: {location['ip']}")
+        print(f"City: {location['city']}")
+        print(f"Region: {location['region']}")
+        print(f"Country: {location['country']}")
+        print(f"Coordinates: {location['loc']}")
 
-    # Apply filters to the saved image
-    apply_filters('abc.jpg')
+    # GPS Module
+    # Uncomment the following section if using GPS hardware
+    """
+    print("Fetching GPS coordinates...")
+    coordinates = get_gps_coordinates()
+    if coordinates:
+        print(f"Latitude: {coordinates[0]}")
+        print(f"Longitude: {coordinates[1]}")
+    """
 
 if __name__ == "__main__":
     main()

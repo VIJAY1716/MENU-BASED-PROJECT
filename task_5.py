@@ -1,20 +1,25 @@
-import numpy as np
-import matplotlib.pyplot as plt
+import pyttsx3
 
-# Dimensions of the image
-width = 400
-height = 300
+# Initialize the text-to-speech engine
+engine = pyttsx3.init()
 
-# Create a NumPy array for the image with RGB channels
-image = np.zeros((height, width, 3), dtype=np.uint8)
+# Get available voices
+voices = engine.getProperty('voices')
 
-# Set the color (RGB values)
-color = (255, 0, 0)  # Red color
+# Set voice (0 for male, 1 for female)
+engine.setProperty('voice', voices[1].id)
 
-# Fill the image with the specified color
-image[:, :] = color
+# Set speech rate
+engine.setProperty('rate', 150)
 
-# Display the image using matplotlib
-plt.imshow(image)
-plt.axis('off')  # Hide axis ticks and labels
-plt.show()
+# Text to be spoken
+text = "Hello, this is a text-to-speech conversion using Python."
+
+# Print the text
+print(text)
+
+# Use the TTS engine to speak the text
+engine.say(text)
+
+# Wait for the speech to finish
+engine.runAndWait()
